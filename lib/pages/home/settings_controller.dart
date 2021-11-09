@@ -1,19 +1,20 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:collection';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'setting_items/index.dart' as SettingItems;
 
-class HomeController extends GetxController {
+class SettingsController extends GetxController {
+  final checkedFolders = [];
   List<FileSystemEntity> items = [];
-  List<String> checkedFolders = [];
+  List<StatelessWidget> settingsItems = [];
   DoubleLinkedQueue dd = new DoubleLinkedQueue();
   String initialPath = Platform.isIOS ? './' : '/storage/emulated/0';
 
-  double pos = 100;
-
-  void toggleCheckFolder(bool remove, String path) {
-    if (remove) {
+  void toggleCheckFolder(bool willCheck, String path) {
+    if (willCheck) {
       checkedFolders.add(path);
     } else {
       checkedFolders.remove(path);
@@ -24,25 +25,19 @@ class HomeController extends GetxController {
 
   @override
   void onInit() async {
-    dd.add(initialPath);
-    final prefs = await SharedPreferences.getInstance();
-    if (prefs.getStringList("checked_folders") != null) {
-      checkedFolders = prefs.getStringList("checked_folders")!;
-    }
-    Directory dir = Directory(initialPath);
     await Permission.manageExternalStorage.request().isGranted;
 
+    dd.add(initialPath);
+
+    Directory dir = Directory(initialPath);
     items.addAll(dir.listSync());
+
+    {
+      settingsItems.add(SettingItems.FolderSelector());
+    }
 
     update();
     super.onInit();
-  }
-
-  setPosition(newPos) {
-    if (newPos > 100) {
-      pos = newPos;
-      update();
-    }
   }
 
   goBack() {
@@ -76,7 +71,6 @@ class HomeController extends GetxController {
       print(e);
     }
 
-    print(items);
     update();
   }
 }
